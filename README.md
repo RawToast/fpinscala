@@ -1,3 +1,7 @@
+Exercises and solutions for Functional Programming in Scala. 
+
+Base repo forked from fpinscala-muc/fpinscala.
+
 ![Build status](https://travis-ci.org/fpinscala/fpinscala.svg?branch=master)
 
 This repository contains exercises, hints, and answers for the book [Functional Programming in Scala](http://manning.com/bjarnason/). Along with the book itself, it's the closest you'll get to having your own private functional programming tutor without actually having one.
