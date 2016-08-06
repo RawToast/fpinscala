@@ -148,7 +148,7 @@ class TreeSpec extends FlatSpec with PropertyChecks {
     }
   }
 
-  behavior of "3.29.3 maximumViaFold"
+  behavior of "3.29.3 depthViaFold"
 
   it should "for all t: Tree[_] ==> depthViaFold(t) == depth(t)" in {
     forAll("t") { t: Tree[Int] =>
