@@ -1,6 +1,6 @@
 package fpinscala.errorhandling
 
-import scala.{Option => _, Either => _, _}
+import scala.{Option => _, Either => _, Some =>_}
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
