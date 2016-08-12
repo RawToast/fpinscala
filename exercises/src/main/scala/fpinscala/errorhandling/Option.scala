@@ -1,7 +1,7 @@
 package fpinscala.errorhandling
 
 
-import scala.{Option => _, Some => _, Either => _}
+import scala.{Either => _, Option => _, Some => _}
 
 // hide std library `Option`, `Some` and `Either`, since we are writing our own in this chapter
 
@@ -67,18 +67,15 @@ object Option {
         mean(xs.map(x => math.pow(x - m, 2))))
   }
 
+  // Since you wanted to know
+
+  def sequence[A](as: List[Option[A]]): Option[List[A]] =
+    traverse(as)(a => a)
+
+  def traverse[A, B](as: List[A])(f: A => Option[B]): Option[List[B]] =
+    as.foldRight(Some(List.empty[B]): Option[List[B]]) ((a, obs) => map2(f(a), obs)(_ :: _))
+
   def map2[A, B, C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] =
     a.flatMap(x =>
       b.flatMap(y => Some(f(x, y))))
-
-  def sequence[A](as: List[Option[A]]): Option[List[A]] =
-//    as.foldRight(Some(List.empty): Option[List[A]]) {
-//      (oa: Option[A], as: Option[List[A]]) => map2(as, oa)((x: List[A], y: A) => y :: x)
-//    }
-    traverse(as)((a: Option[A]) => a)
-
-  def traverse[A, B](as: List[A])(f: A => Option[B]): Option[List[B]] =
-    as.foldRight(Some(List.empty): Option[List[B]]) {
-      (a, obs) => map2(f(a), obs)((x: B, y) => x :: y)
-    }
 }
