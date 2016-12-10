@@ -1,5 +1,6 @@
 import sbt._
 import Keys._
+import org.ensime.EnsimePlugin
 
 object FPInScalaBuild extends Build {
   val opts = Project.defaultSettings ++ Seq(
@@ -8,7 +9,8 @@ object FPInScalaBuild extends Build {
     libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.2.0" % "test",
     libraryDependencies += "junit" % "junit" % "4.10" % "test",
     libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.11.3" % "test"
-  )
+
+  ) ++ EnsimePlugin.projectSettings
 
   lazy val root =
     Project(id = "fpinscala",
