@@ -2,6 +2,9 @@ package fpinscala.parallelism
 
 import java.util.concurrent._
 
+import scala.annotation.tailrec
+import scala.collection.immutable.Seq
+
 object Par {
   type Par[A] = ExecutorService => Future[A]
   
@@ -40,9 +43,19 @@ object Par {
 
   def sortPar(parList: Par[List[Int]]) = map(parList)(_.sorted)
 
-  def sequence[A](as: List[Par[A]]): Par[List[A]] = ???
+  def sequence[A](as: List[Par[A]]): Par[List[A]] =
+    as.foldRight(unit(List.empty[A]))((a, b) => map2(a, b)(_ :: _))
 
-  def parFilter[A](l: List[A])(f: A => Boolean): Par[List[A]] = ???
+  def parMap[A,B](ps: List[A])(f: A => B): Par[List[B]] = fork {
+    val fbs: List[Par[B]] = ps.map(asyncF(f))
+    sequence(fbs)
+  }
+
+  def parFilter[A](l: List[A])(f: A => Boolean): Par[List[A]] = {
+    val listParOptions: List[Par[Option[A]]] = l.map(asyncF((a:A) => if(f(a)) Some(a) else None))
+    val parListOptions: Par[List[Option[A]]] = sequence(listParOptions)
+    map(parListOptions)((a: List[Option[A]]) => a.flatten)
+  }
 
   def equal[A](e: ExecutorService)(p: Par[A], p2: Par[A]): Boolean = 
     p(e).get == p2(e).get
