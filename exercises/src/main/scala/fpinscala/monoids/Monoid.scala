@@ -1,7 +1,8 @@
 package fpinscala.monoids
 
 import fpinscala.parallelism.Nonblocking._
-import fpinscala.parallelism.Nonblocking.Par.toParOps // infix syntax for `Par.map`, `Par.flatMap`, etc
+import fpinscala.parallelism.Nonblocking.Par.toParOps
+import fpinscala.testing.{Gen, Prop} // infix syntax for `Par.map`, `Par.flatMap`, etc
 
 trait Monoid[A] {
   def op(a1: A, a2: A): A
@@ -20,38 +21,73 @@ object Monoid {
     val zero = Nil
   }
 
-  lazy val intAddition: Monoid[Int] = sys.error("todo")
+  lazy val intAddition: Monoid[Int] = new Monoid[Int] {
+    override def op(a1: Int, a2: Int) = a1 + a2
 
-  lazy val intMultiplication: Monoid[Int] = sys.error("todo")
+    override def zero = 0
+  }
 
-  lazy val booleanOr: Monoid[Boolean] = sys.error("todo")
+  lazy val intMultiplication: Monoid[Int] = new Monoid[Int] {
+    override def op(a1: Int, a2: Int) = a1 * a2
 
-  lazy val booleanAnd: Monoid[Boolean] = sys.error("todo")
+    override def zero = 1
+  }
 
-  def optionMonoid[A]: Monoid[Option[A]] = sys.error("todo")
+  lazy val booleanOr: Monoid[Boolean] = new Monoid[Boolean] {
+    override def op(a1: Boolean, a2: Boolean) = a1 || a2
 
-  def endoMonoid[A]: Monoid[A => A] = sys.error("todo")
+    override def zero = false
+  }
 
-  import fpinscala.testing._
-  import Prop._
-  def monoidLaws[A](m: Monoid[A], gen: Gen[A]): Prop = sys.error("todo")
+  lazy val booleanAnd: Monoid[Boolean] = new Monoid[Boolean] {
+    override def op(a1: Boolean, a2: Boolean) = a1 && a2
+
+    override def zero = true
+  }
+
+  def optionMonoid[A]: Monoid[Option[A]] = new Monoid[Option[A]] {
+    override def op(a1: Option[A], a2: Option[A]) = (a1, a2) match {
+      case (None, None) => None
+      case (_, None) => a1
+      case (None, _) => a2
+      case _ => a1
+    }
+
+    override def zero = None
+  }
+
+  def endoMonoid[A]: Monoid[A => A] = new Monoid[(A) => A] {
+    override def op(a1: (A) => A, a2: (A) => A) = a1 andThen a2
+
+    override def zero = (x:A) => x
+  }
+
+  def monoidLaws[A](m: Monoid[A], gen: Gen[A]): Prop = ???
 
   def trimMonoid(s: String): Monoid[String] = sys.error("todo")
 
   def concatenate[A](as: List[A], m: Monoid[A]): A =
-    sys.error("todo")
+    as.foldLeft(m.zero)(m.op)
 
   def foldMap[A, B](as: List[A], m: Monoid[B])(f: A => B): B =
-    sys.error("todo")
+    as.foldLeft(m.zero)((b, a) => m.op(f(a), b))
 
-  def foldRight[A, B](as: List[A])(z: B)(f: (A, B) => B): B =
-    sys.error("todo")
+  // The function type `(A, B) => B`, when curried, is `A => (B => B)`.
+  // And of course, `B => B` is a monoid for any `B` (via function composition).
+  def foldRight[A, B](as: List[A])(z: B)(f: (A, B) => B): B = {
+    foldMap(as, endoMonoid[B])(f.curried)(z)
+  }
 
   def foldLeft[A, B](as: List[A])(z: B)(f: (B, A) => B): B =
-    sys.error("todo")
+    ???
 
-  def foldMapV[A, B](as: IndexedSeq[A], m: Monoid[B])(f: A => B): B =
-    sys.error("todo")
+  def foldMapV[A, B](as: IndexedSeq[A], m: Monoid[B])(f: A => B): B = {
+    val (xs, ys) = as.splitAt(as.length / 2)
+
+    lazy val l = xs.foldRight(m.zero)((a, b) => m.op(f(a), b))
+    lazy val r = ys.foldRight(m.zero)((a, b) => m.op(f(a), b))
+    m.op(l, r)
+  }
 
   def ordered(ints: IndexedSeq[Int]): Boolean =
     sys.error("todo")
