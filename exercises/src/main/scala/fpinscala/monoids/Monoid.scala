@@ -1,7 +1,10 @@
 package fpinscala.monoids
 
 import fpinscala.parallelism.Nonblocking._
+import fpinscala.parallelism.Nonblocking.Par.toParOps
 import fpinscala.testing.{Gen, Prop}
+
+import scala.Option
 // infix syntax for `Par.map`, `Par.flatMap`, etc
 
 trait Monoid[A] {
@@ -65,8 +68,17 @@ object Monoid {
     override def zero = (x: A) => x
   }
 
-  def monoidLaws[A](m: Monoid[A], gen: Gen[A]): Prop = ???
-
+  def monoidLaws[A](m: Monoid[A], gen: Gen[A]): Prop =
+  // Associativity
+    Prop.forAll(for {
+      x <- gen
+      y <- gen
+      z <- gen
+    } yield (x, y, z))(p =>
+      m.op(p._1, m.op(p._2, p._3)) == m.op(m.op(p._1, p._2), p._3)) &&
+      // Identity
+      Prop.forAll(gen)((a: A) =>
+        m.op(a, m.zero) == a && m.op(m.zero, a) == a)
   def trimMonoid(s: String): Monoid[String] = sys.error("todo")
 
   def concatenate[A](as: List[A], m: Monoid[A]): A =
@@ -92,8 +104,30 @@ object Monoid {
     m.op(l, r)
   }
 
-  def ordered(ints: IndexedSeq[Int]): Boolean =
-    sys.error("todo")
+  // Hard: Use foldMap to detect whether a given IndexedSeq[Int] is ordered.
+  // You’ll need to come up with a creative Monoid.
+  def ordered(ints: IndexedSeq[Int]): Boolean = {
+
+    def intTruth = new Monoid[Option[(Int, Int, Boolean)]] {
+      override def op(a1: Option[(Int, Int, Boolean)],
+                      a2: Option[(Int, Int, Boolean)]): Option[(Int, Int, Boolean)] = {
+        (a1, a2) match {
+          case (Some((a1, b1, c1)), Some((a2, b2, c2))) =>
+            val ord = (c1 && c2) && (a1 >= b2 && b1 >= b2) || (a2 >= b1 && b2 >= b1)
+            Some(a1.min(a2), b1.max(b2), ord)
+          case (x, None) => x
+          case (None, x) => x
+        }
+      }
+
+      override def zero = None
+    }
+
+    foldMap(ints.toList, intTruth)(a => Some(a, a, true)) match {
+      case Some(a) => a._3
+      case None => true
+    }
+  }
 
   sealed trait WC
 
@@ -122,7 +156,29 @@ object Monoid {
     pm.op(l, r)
   }
 
-  lazy val wcMonoid: Monoid[WC] = sys.error("todo")
+  lazy val wcMonoid: Monoid[WC] = new Monoid[WC] {
+    override def op(a1: WC, a2: WC): WC = (a1, a2) match {
+      case (w1: Part, w2: Part) =>
+        val mid = w1.rStub + w2.lStub
+        val midWords = if (mid.isEmpty) 0 else 1 + mid.count(p => p == ' ')
+
+        Part(w1.lStub, w1.words + w2.words + midWords, w2.rStub)
+      case (w1: Part, w2: Stub) =>
+
+        val mid = w1.rStub + w2.chars
+        val midWords = if (mid.isEmpty) 0 else 1 + mid.count(p => p == ' ')
+
+        Part(w1.lStub, w1.words + midWords, "")
+      case (w1: Stub, w2: Part) =>
+        val mid = w2.lStub + w1.chars
+        val midWords = if (mid.isEmpty) 0 else 1 + mid.count(p => p == ' ')
+
+        Part("", w2.words + midWords, w2.rStub)
+      case (w1: Stub, w2: Stub) => Stub(w1.chars + w2.chars)
+    }
+
+    override def zero = Stub("")
+  }
 
   def countWords(s: String): Int = sys.error("todo")
 

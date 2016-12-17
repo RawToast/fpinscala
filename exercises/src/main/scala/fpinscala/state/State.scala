@@ -73,6 +73,8 @@ object RNG {
     ((d1, d2, d3), r3)
   }
 
+  def boolean: Rand[Boolean] = map(nonNegativeInt)(_ % 2 == 0)
+
   def ints(count: Int)(rng: RNG): (List[Int], RNG) = {
 
     @tailrec

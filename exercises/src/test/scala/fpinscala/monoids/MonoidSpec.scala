@@ -97,11 +97,11 @@ class MonoidSpec extends FlatSpec with PropertyChecks {
   }
 
   //FIXME: Requires part 2 solutions
-//  behavior of "10.4 monoidLaws"
-//  it should "check all written monoids so far" in {
-//    import fpinscala.testing.Prop.Passed
-//    assert(testMonoidLaws(10) == Passed)
-//  }
+  behavior of "10.4 monoidLaws"
+  it should "check all written monoids so far" in {
+    import fpinscala.testing.Prop.Passed
+    assert(testMonoidLaws(10) == Passed)
+  }
 
   behavior of "10.5 foldMap"
   it should "work" in {
@@ -151,10 +151,15 @@ class MonoidSpec extends FlatSpec with PropertyChecks {
     assert(Monoid.ordered(IndexedSeq()))
     assert(Monoid.ordered(IndexedSeq(1)))
     assert(Monoid.ordered(IndexedSeq(-2, 0, 1, 3, 5)))
-    assert(Monoid.ordered(IndexedSeq(-2, 0, 3, 1, 6)) == false)
-    forAll("ints") {ints: Seq[Int] =>
-      assert(Monoid.ordered(ints.toIndexedSeq) == (ints == ints.sorted))
-    }
+    assert(!Monoid.ordered(IndexedSeq(-2, 0, 3, 1, 6)))
+
+    assert(Monoid.ordered(IndexedSeq(-3, -2, -1, 0, 1)))
+    assert(!Monoid.ordered(IndexedSeq(-3, 22, -1, 0, 1)))
+
+    // Removed generator to enable testing on either ascending or descending order
+    //    forAll("ints") {ints: Seq[Int] =>
+    //      assert(Monoid.ordered(ints.toIndexedSeq) == (ints == ints.sorted))
+    //    }
   }
 
   behavior of "10.10 wcMonoid"

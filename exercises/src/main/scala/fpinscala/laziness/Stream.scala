@@ -104,6 +104,9 @@ sealed trait Stream[+A] {
     case (Cons(h1, t1), Cons(h2, t2)) => Option(Some(h1()) -> Some(h2()), t1() -> t2())
   }
 
+  def zip[B](s2: Stream[B]): Stream[(A,B)] =
+    zipWith(s2)((_,_))
+
   def startsWith[B](s: Stream[B]): Boolean =
     zipAll(s).takeWhile { case (_, b) => b.nonEmpty }.forAll { case (a, b) => a == b }
 
