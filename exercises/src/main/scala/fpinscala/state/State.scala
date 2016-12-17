@@ -37,8 +37,6 @@ object RNG {
 
   def nonNegativeInt(rng: RNG): (Int, RNG) = {
     val nxt = rng.nextInt
-    println(s"loop ${nxt._1}")
-
 
     if (nxt._1 >= 0) nxt
     else if (nxt._1 == Int.MinValue) (Int.MaxValue, nxt._2)

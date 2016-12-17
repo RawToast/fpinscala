@@ -142,7 +142,8 @@ object Gen {
 
   def stringN(n: Int): Gen[String] = listOfN(n, choose(0, 127)).map(_.map(_.toChar).mkString)
 
-  def union[A](g1: Gen[A], g2: Gen[A]): Gen[A] = ???
+  def union[A](g1: Gen[A], g2: Gen[A]): Gen[A] =
+    boolean.flatMap(b => if (b) g1 else g2)
 
   def weighted[A](g1: (Gen[A], Double), g2: (Gen[A], Double)): Gen[A] = ???
 
